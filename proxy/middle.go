@@ -3,6 +3,7 @@ package proxy
 import (
 	"bufio"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -73,7 +74,8 @@ type Middle struct {
 	Server   *http.Server
 }
 
-func NewMiddle(proxy *Proxy, caPath string) (Interceptor, error) {
+func NewMiddle(proxy *Proxy, caPath string, ignoreNames []string) (Interceptor, error) {
+	fmt.Println("[NewMiddle]...")
 	ca, err := cert.NewCA(caPath)
 	if err != nil {
 		return nil, err
@@ -90,7 +92,14 @@ func NewMiddle(proxy *Proxy, caPath string) (Interceptor, error) {
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)), // disable http2
 		TLSConfig: &tls.Config{
 			GetCertificate: func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+				fmt.Println("[GetCertificate]...", chi.ServerName)
 				log.Debugf("Middle GetCertificate ServerName: %v\n", chi.ServerName)
+				for _, v := range ignoreNames {
+					if strings.Contains(chi.ServerName, v) {
+						fmt.Println(chi.ServerName, "----------------> this ignore, ", v)
+						return nil, nil
+					}
+				}
 				return ca.GetCert(chi.ServerName)
 			},
 		},

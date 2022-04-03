@@ -59,6 +59,8 @@ func main() {
 		FullTimestamp: true,
 	})
 
+	ignoreServerNames := []string{"snssdk.com", "zijieapi.com", "amemv.com"}
+
 	opts := &proxy.Options{
 		Addr:              config.addr,
 		StreamLargeBodies: 1024 * 1024 * 5,
@@ -66,7 +68,7 @@ func main() {
 		CaRootPath:        config.certPath,
 	}
 
-	p, err := proxy.NewProxy(opts)
+	p, err := proxy.NewProxy(opts, ignoreServerNames)
 	if err != nil {
 		log.Fatal(err)
 	}
